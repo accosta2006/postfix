@@ -1,0 +1,45 @@
+version: '3.4'
+
+services:
+  db:
+    container_name: db
+    image: mysql:5.7
+    tty: true
+    environment:
+      - MYSQL_DATABASE=postfixadmin
+      - MYSQL_USER=postfixadmin
+      - MYSQL_PASSWORD=pass
+      - MYSQL_ROOT_PASSWORD=root
+
+    restart: unless-stopped
+
+  postfix:
+    container_name: postfix
+    tty: true
+    image: catatnight/postfix
+    ports:
+      - '25:25'
+    volumes:
+      - ./cfg/main.cf:/etc/postfix/main.cf
+
+  postfixadmin:
+    container_name: pa
+    tty: true
+    restart: unless-stopped
+    depends_on:
+      - db
+      - postfix
+    image: postfixadmin
+    ports:
+      - 8080:80
+
+    environment:
+      - POSTFIXADMIN_DB_TYPE=mysqli
+      - POSTFIXADMIN_DB_HOST=db
+      - POSTFIXADMIN_DB_USER=postfixadmin
+      - POSTFIXADMIN_DB_NAME=postfixadmin
+      - POSTFIXADMIN_DB_PASSWORD=pass
+
+    volumes:
+      - ./cfg/config.local.php:/var/www/html/config.local.php
+      - ./cfg/config.inc.php:/var/www/html/config.inc.php
